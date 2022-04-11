@@ -30,6 +30,9 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 class TransformerModel(nn.Module):
+    """The transformer model heavily inspired by the following guide
+    https://pytorch.org/tutorials/beginner/transformer_tutorial.html
+    """
 
     def __init__(self, ntoken: int, d_model: int, nhead: int, d_hid: int,
                  nlayers: int, dropout: float = 0.5, atten_type='multihead'):

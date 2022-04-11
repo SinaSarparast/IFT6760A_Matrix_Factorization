@@ -1,7 +1,7 @@
-'''A wrapper class for scheduled optimizer '''
-
 class ScheduledOptim():
-    '''A simple wrapper class for learning rate scheduling'''
+    '''A simple wrapper class for learning rate scheduling. This is exactly the scheduler used by attention is all you need repository.
+    See https://github.com/jadore801120/attention-is-all-you-need-pytorch/blob/132907dd272e2cc92e3c10e6c4e783a87ff8893d/transformer/Optim.py#L4
+    '''
 
     def __init__(self, optimizer, lr_mul, d_model, n_warmup_steps):
         self._optimizer = optimizer

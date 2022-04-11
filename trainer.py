@@ -12,6 +12,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 from scheduler import ScheduledOptim
 
 class Trainer():
+    """A class that handles different phases of training the model.
+    """
     def __init__(self,  model: nn.Module, train_data, val_data, test_data, lr, ntokens, bptt, train_from,model_save_dir='./models', logs_dir='./logs') -> None:
         self.model = model.train()  # turn on train mode
         self.d_model = self.model.d_model
@@ -52,6 +54,14 @@ class Trainer():
         pass
 
     def step(self, epoch) -> None:
+        """One step of training
+
+        Args:
+            epoch (int): epoch number
+
+        Returns:
+            float: current loss
+        """
         total_loss = 0.
         cur_loss = 0
         start_time = time.time()
@@ -85,6 +95,15 @@ class Trainer():
         return cur_loss
 
     def evaluate(self, model, eval_data: Tensor) -> float:
+        """Method that does evaluate the given model on the evaluation dataset
+
+        Args:
+            model (nn.Module): target model
+            eval_data (Tensor): evaluation dataset
+
+        Returns:
+            float: loss
+        """
         model.eval()  # turn on evaluation mode
         total_loss = 0.
         src_mask = generate_square_subsequent_mask(self.bptt).to(device)
@@ -100,6 +119,11 @@ class Trainer():
         return total_loss / (len(eval_data) - 1)
 
     def end_of_training(self, best_model):
+        """The end of training actions
+
+        Args:
+            best_model (nn.Module): best perfroming model
+        """
         # for evaluation
         test_loss = self.evaluate(best_model,self.test_data)
         test_ppl = math.exp(test_loss)
@@ -107,7 +131,15 @@ class Trainer():
         write_to_log(self.logs_dir,'training_log.log',st)
         print(st)
 
-    def train(self, epochs):
+    def train(self, epochs: int):
+        """traines the model by executing and managing epochs
+
+        Args:
+            epochs (int): number of epoch used for training
+
+        Returns:
+            nn.Module: Best performing model
+        """
         best_val_loss = float('inf')
         best_model = None
         for epoch in range(self.current_epoch, epochs + 1):

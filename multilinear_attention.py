@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+# This attention type is provided by the authors of the paper
 # https://github.com/szhangtju/The-compression-of-Transformer
 
 __author__ = "Xindian Ma"
