@@ -70,15 +70,16 @@ if __name__ == "__main__":
 
     # download and prepare wikitext dataset for language modeling
     # use wikitext 2 for debugging it's faster.
-    # train_iter = WikiText2(split='train')
-    train_iter = WikiText103(split='train')
+    train_iter = WikiText2(split='train')
+    # train_iter = WikiText103(split='train')
     tokenizer = get_tokenizer('basic_english')
     vocab = build_vocab_from_iterator(map(tokenizer, train_iter), specials=['<unk>'])
     vocab.set_default_index(vocab['<unk>'])
 
     # train_iter was "consumed" by the process of building the vocab,
     # so we have to create it again
-    train_iter, val_iter, test_iter = WikiText103(root = args.raw_data_dir, split = ('train', 'valid', 'test'))
+    # train_iter, val_iter, test_iter = WikiText103(root = args.raw_data_dir, split = ('train', 'valid', 'test'))
+    train_iter, val_iter, test_iter = WikiText2(root = args.raw_data_dir, split = ('train', 'valid', 'test'))
 
     train_data = data_process(train_iter,vocab,tokenizer)
     val_data = data_process(val_iter,vocab,tokenizer)
@@ -88,6 +89,8 @@ if __name__ == "__main__":
     val_data = batchify(val_data, args.eval_batch_size)
     test_data = batchify(test_data, args.test_batch_size)
 
+    if not os.path.exists(args.prc_data_dir):
+        os.mkdir(args.prc_data_dir)
     torch.save(train_data, os.path.join(args.prc_data_dir,'train_data.pt') )
     torch.save(val_data, os.path.join(args.prc_data_dir,'val_data.pt') )
     torch.save(test_data, os.path.join(args.prc_data_dir,'test_data.pt') )
