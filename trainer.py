@@ -9,11 +9,12 @@ from dataloader import *
 from transformer_model import generate_square_subsequent_mask
 from transformer_model import TransformerModel
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+from scheduler import ScheduledOptim
 
 class Trainer():
     def __init__(self,  model: nn.Module, train_data, val_data, test_data, lr, ntokens, bptt, train_from,model_save_dir='./models', logs_dir='./logs') -> None:
         self.model = model.train()  # turn on train mode
+        self.d_model = self.model.d_model
         self.train_data = train_data
         self.val_data = val_data
         self.test_data = test_data
@@ -41,10 +42,12 @@ class Trainer():
             self.current_epoch = 1
 
         self.optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-        # self.optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0,amsgrad=False)
+        # both multihead and multilinear versions use adam but the loss explodes if we use it (unless small lr is used)
+        # self.optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9, weight_decay=0,amsgrad=True)
+
         # what sort of scheduling should we use, given that we can't train for very long? 
         # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 4000.0, gamma=0.95, verbose=True)
-        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.1, verbose=True)
+        self.scheduler = ScheduledOptim(self.optimizer,lr,self.d_model,n_warmup_steps=10)
 
         pass
 

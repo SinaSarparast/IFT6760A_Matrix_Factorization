@@ -30,6 +30,7 @@ epochs = 10 # number of training epochs
 bptt = 35 # ?
 train_from = None#os.path.join(model_save_dir,'multilinear_epoch4.pt')
 atten_type='multilinear' # attention type multihead (vanila transformer) and multilinear
+# atten_type = 'multihead'
 
 # warmup_steps = 4000
 # label_smoothing 
