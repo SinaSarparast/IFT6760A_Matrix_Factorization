@@ -14,26 +14,30 @@ from scheduler import ScheduledOptim
 class Trainer():
     """A class that handles different phases of training the model.
     """
-    def __init__(self,  model: nn.Module, train_data, val_data, test_data, lr, ntokens, bptt, train_from,model_save_dir='./models', logs_dir='./logs') -> None:
+    def __init__(self,  model: nn.Module, train_data, val_data, test_data, args) -> None:
         self.model = model.train()  # turn on train mode
         self.d_model = self.model.d_model
         self.train_data = train_data
         self.val_data = val_data
         self.test_data = test_data
-        self.log_interval = 200
+        self.log_interval = args.log_interval
         self.criterion = nn.CrossEntropyLoss(label_smoothing=0.1) #reduction="sum", 
-        # self.criterion = cal_loss
-        self.lr = lr
-        self.ntokens = ntokens
-        self.bptt = bptt
-        self.num_batches = len(self.train_data) // bptt
-        self.train_from = train_from
-        self.model_save_dir = model_save_dir
-        self.logs_dir = logs_dir
+        self.lr = args.lr
+        self.ntokens = args.ntokens
+        self.bptt = args.bptt
+        self.num_batches = len(self.train_data) // args.bptt
+        self.train_from = args.train_from
+        self.model_save_dir = args.model_save_dir
+        self.logs_dir = args.logs_dir
 
-        if train_from != None:
-            checkpoint = torch.load(train_from)
-            # model = TransformerModel(ntokens, emsize, nhead, d_hid, nlayers, dropout, atten_type='multilinear').to(device)
+
+        self.optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
+        # both multihead and multilinear versions use adam but the loss explodes if we use it (unless small lr is used)
+        # self.optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9, weight_decay=0,amsgrad=True)
+
+
+        if args.train_from != None:
+            checkpoint = torch.load(args.train_from)
             self.model.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.current_epoch = checkpoint['epoch']
@@ -49,7 +53,7 @@ class Trainer():
 
         # what sort of scheduling should we use, given that we can't train for very long? 
         # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 4000.0, gamma=0.95, verbose=True)
-        self.scheduler = ScheduledOptim(self.optimizer,lr,self.d_model,n_warmup_steps=10)
+        self.scheduler = ScheduledOptim(self.optimizer,self.lr,self.d_model,n_warmup_steps=10,n_steps=self.current_epoch)
 
         pass
 

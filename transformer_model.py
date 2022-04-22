@@ -34,16 +34,21 @@ class TransformerModel(nn.Module):
     https://pytorch.org/tutorials/beginner/transformer_tutorial.html
     """
 
-    def __init__(self, ntoken: int, d_model: int, nhead: int, d_hid: int,
-                 nlayers: int, dropout: float = 0.5, atten_type='multihead'):
+    def __init__(self, args):
         super().__init__()
         self.model_type = 'Transformer'
-        self.pos_encoder = PositionalEncoding(d_model, dropout)
-        encoder_layers = TransformerEncoderLayer(d_model, nhead, d_hid, dropout, atten_type=atten_type)
-        self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)
-        self.encoder = nn.Embedding(ntoken, d_model)
-        self.d_model = d_model
-        self.decoder = nn.Linear(d_model, ntoken)
+        self.pos_encoder = PositionalEncoding(args.d_model, args.dropout)
+        encoder_layers = TransformerEncoderLayer(
+            d_model=args.d_model,
+            nhead=args.nhead,
+            dim_feedforward=args.dim_feedforward,
+            dropout=args.dropout,
+            atten_type=args.atten_type
+            )
+        self.transformer_encoder = TransformerEncoder(encoder_layers, args.nlayers)
+        self.encoder = nn.Embedding(args.ntokens, args.d_model)
+        self.d_model = args.d_model
+        self.decoder = nn.Linear(args.d_model, args.ntokens)
 
         self.init_weights()
 

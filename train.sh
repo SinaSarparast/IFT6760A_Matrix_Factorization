@@ -1,0 +1,15 @@
+python ./train.py\
+    --emsize 50\
+    --d_hid 50\
+    --d_model 50\
+    --dim_feedforward 2048\
+    --nlayers 2\
+    --nhead 2\
+    --dropout 0.2\
+    --lr 5.0\
+    --model_save_dir ./models\
+    --logs_dir ./training_logs\
+    --epochs 10\
+    --bptt 5\
+    --atten_type multilinear\
+    --log_interval 2000
