@@ -41,15 +41,9 @@ class Trainer():
             self.model.load_state_dict(checkpoint['model_state_dict'])
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.current_epoch = checkpoint['epoch']
-            self.scheduler = checkpoint['lr_sched']
-            # loss = checkpoint['loss']
             print('>>> successfully loaded the model from checkpoint.')
         else:
             self.current_epoch = 1
-
-        self.optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-        # both multihead and multilinear versions use adam but the loss explodes if we use it (unless small lr is used)
-        # self.optimizer = torch.optim.Adam(model.parameters(), lr=lr, betas=(0.9, 0.98), eps=1e-9, weight_decay=0,amsgrad=True)
 
         # what sort of scheduling should we use, given that we can't train for very long? 
         # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 4000.0, gamma=0.95, verbose=True)
@@ -86,7 +80,7 @@ class Trainer():
 
             total_loss += loss.item()
             if batch % self.log_interval == 0 and batch > 0:
-                lr = self.scheduler.get_last_lr()[0]
+                lr = self.scheduler.get_last_lr()[-1]
                 ms_per_batch = (time.time() - start_time) * 1000 / self.log_interval
                 cur_loss = total_loss / self.log_interval
                 ppl = math.exp(cur_loss)
@@ -162,7 +156,6 @@ class Trainer():
                     'model_state_dict': self.model.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     'loss': loss,
-                    'lr_sched': self.scheduler
                     }, os.path.join(self.model_save_dir,'multilinear_epoch{}.pt'.format(epoch)) )
             print('>>> successfully saved the model to checkpoint.')
             

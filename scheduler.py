@@ -3,12 +3,12 @@ class ScheduledOptim():
     See https://github.com/jadore801120/attention-is-all-you-need-pytorch/blob/132907dd272e2cc92e3c10e6c4e783a87ff8893d/transformer/Optim.py#L4
     '''
 
-    def __init__(self, optimizer, lr_mul, d_model, n_warmup_steps):
+    def __init__(self, optimizer, lr_mul, d_model, n_warmup_steps, n_steps=0):
         self._optimizer = optimizer
         self.lr_mul = lr_mul
         self.d_model = d_model
         self.n_warmup_steps = n_warmup_steps
-        self.n_steps = 0
+        self.n_steps = n_steps
         self.learning_rates = [lr_mul]
 
 
