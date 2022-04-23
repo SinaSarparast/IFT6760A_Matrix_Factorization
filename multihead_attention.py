@@ -20,7 +20,7 @@ class ScaledDotProductAttention(nn.Module):
         attn = attn / self.temperature
 
         if mask is not None:
-            attn = attn.masked_fill(mask, -np.inf)
+            attn = attn.masked_fill(torch.gt(mask, 0), -np.inf)
 
         attn = self.softmax(attn)
         attn = self.dropout(attn)
@@ -72,7 +72,7 @@ class MultiHeadAttention(nn.Module):
         k = k.permute(2, 0, 1, 3).contiguous().view(-1, len_k, d_k) # (n*b) x lk x dk
         v = v.permute(2, 0, 1, 3).contiguous().view(-1, len_v, d_v) # (n*b) x lv x dv
 
-        attn_mask = attn_mask.repeat(n_head*attn_mask.size(0), 1, 1) # (n*b) x .. x ..
+        attn_mask = attn_mask.repeat(q.size(0), 1, 1) # (n*b) x .. x ..
         output, attn = self.attention(q, k, v, mask=attn_mask)
 
         output = output.view(n_head, sz_b, len_q, d_v)

@@ -49,6 +49,10 @@ class Trainer():
         # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 4000.0, gamma=0.95, verbose=True)
         self.scheduler = ScheduledOptim(self.optimizer,self.lr,self.d_model,n_warmup_steps=10,n_steps=self.current_epoch)
 
+        pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        st='The model has {} parameters.\n'.format(pytorch_total_params)
+        write_to_log(self.logs_dir,'training_log.log',st)
+
         pass
 
     def step(self, epoch) -> None:
@@ -68,8 +72,8 @@ class Trainer():
         for batch, i in enumerate(range(0, self.train_data.size(0) - 1, self.bptt)):
             data, targets = get_batch(self.train_data, i, self.bptt)
             batch_size = data.size(0)
-            if batch_size != self.bptt:  # only on last batch
-                src_mask = src_mask[:batch_size, :batch_size]
+            # if batch_size != self.bptt:  # only on last batch
+            #     src_mask = src_mask[:batch_size, :batch_size]
             output = self.model(data, src_mask)
             loss = self.criterion(output.view(-1, self.ntokens), targets)
 
@@ -86,7 +90,7 @@ class Trainer():
                 ppl = math.exp(cur_loss)
                 st = f'| epoch {epoch:3d} | {batch:5d}/{self.num_batches:5d} batches | 'f'lr {lr:02.2f} | ms/batch {ms_per_batch:5.2f} | 'f'loss {cur_loss:5.2f} | ppl {ppl:8.2f}'
                 print(st)
-                write_to_log(self.logs_dir,'training_log.log',st)
+                write_to_log(self.logs_dir,'training_log.log',st+'\n')
                 total_loss = 0
                 start_time = time.time()
             
@@ -109,8 +113,8 @@ class Trainer():
             for i in range(0, eval_data.size(0) - 1, self.bptt):
                 data, targets = get_batch(eval_data, i, self.bptt)
                 batch_size = data.size(0)
-                if batch_size != self.bptt:
-                    src_mask = src_mask[:batch_size, :batch_size]
+                # if batch_size != self.bptt:
+                #     src_mask = src_mask[:batch_size, :batch_size]
                 output = model(data, src_mask)
                 output_flat = output.view(-1, self.ntokens)
                 total_loss += batch_size * self.criterion(output_flat, targets).item()

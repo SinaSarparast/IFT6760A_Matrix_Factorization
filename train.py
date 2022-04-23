@@ -10,9 +10,9 @@ test_data = torch.load(os.path.join(data_dir,'test_data.pt'), map_location=devic
 vocab = torch.load(os.path.join(data_dir,'vocab.pt'), map_location=device )
 
 # only use for debugging
-# train_data = torch.randint(0, 20, (100,20))
-# val_data = torch.randint(0, 20, (100,20))
-# test_data = torch.randint(0, 20, (100,20))
+train_data = torch.randint(0, 100, (150,50))
+val_data = torch.randint(0, 100, (100,50))
+test_data = torch.randint(0, 100, (100,50))
 
 
 if __name__ == "__main__":
@@ -38,13 +38,15 @@ if __name__ == "__main__":
     args.ntokens = len(vocab)  # size of vocabulary
 
     # only for debugging
-    # args.ntokens = 20
+    args.ntokens = 100
 
     # warmup_steps = 4000
     # label_smoothing 
 
     #build the model
     model = TransformerModel(args).to(device)
+    pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print('The model has {} parameters.'.format(pytorch_total_params))
 
     trainer = Trainer(model, train_data, val_data, test_data, args)
     trainer.train(args.epochs)

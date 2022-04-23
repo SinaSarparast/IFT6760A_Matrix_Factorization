@@ -10,6 +10,6 @@ python ./train.py\
     -model_save_dir ./models\
     -logs_dir ./training_logs\
     -epochs 100000\
-    -bptt 5\
+    -bptt 36\
     -atten_type multihead\
-    -log_interval 2000
+    -log_interval 100
