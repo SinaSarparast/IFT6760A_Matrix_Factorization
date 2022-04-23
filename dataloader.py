@@ -62,9 +62,9 @@ if __name__ == "__main__":
     parser = ArgumentParser(conflict_handler="resolve")
     parser.add_argument("--raw_data_dir", default='./raw_data', type=str, help="raw data directory ")
     parser.add_argument("--prc_data_dir", default='./processed_data', type=str, help="processed data directory ")
-    parser.add_argument("--train_batch_size", default=20, type=str, help="train set batch size")
-    parser.add_argument("--eval_batch_size", default=10, type=str, help="evaluation set batch size")
-    parser.add_argument("--test_batch_size", default=10, type=str, help="test set batch size")
+    parser.add_argument("--train_batch_size", default=20, type=int, help="train set batch size")
+    parser.add_argument("--eval_batch_size", default=10, type=int, help="evaluation set batch size")
+    parser.add_argument("--test_batch_size", default=10, type=int, help="test set batch size")
 
     args = parser.parse_args()
 
