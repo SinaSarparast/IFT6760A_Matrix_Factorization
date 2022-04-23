@@ -11,7 +11,7 @@ from torch.nn.init import xavier_uniform_
 from torch.nn import Dropout
 from torch.nn import Linear
 from torch.nn import LayerNorm
-from multihead_attention import MultiheadAttention
+from multihead_attention import MultiHeadAttention
 from multilinear_attention import MultiLinearAttention
 
 class Transformer(Module):
@@ -412,7 +412,8 @@ class TransformerDecoderLayer(Module):
         if atten_type == 'multilinear':
             self.self_attn = MultiLinearAttention(n_head=nhead, d_model=d_model, d_k=d_model, d_v=d_model, dropout=dropout)
         else:
-            self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=batch_first,**factory_kwargs)
+            self.self_attn = MultiHeadAttention(n_head=nhead, d_model=d_model, d_k=d_model, d_v=d_model, dropout=dropout)
+            # self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=batch_first,**factory_kwargs)
         # Implementation of Feedforward model
         self.linear1 = Linear(d_model, dim_feedforward, **factory_kwargs)
         self.dropout = Dropout(dropout)
