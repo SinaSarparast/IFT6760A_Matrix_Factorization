@@ -303,7 +303,7 @@ class TransformerEncoderLayer(Module):
         if atten_type == 'multilinear':
             self.self_attn = MultiLinearAttention(n_head=nhead, d_model=d_model, d_k=d_model, d_v=d_model, dropout=dropout)
         else:
-            self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=batch_first,**factory_kwargs)
+            self.self_attn = MultiHeadAttention(n_head=nhead, d_model=d_model, d_k=d_model, d_v=d_model, dropout=dropout)
 
         # Implementation of Feedforward model
         self.linear1 = Linear(d_model, dim_feedforward, **factory_kwargs)
@@ -356,8 +356,9 @@ class TransformerEncoderLayer(Module):
                   attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor]) -> Tensor:
         x = self.self_attn(x, x, x,
                            attn_mask=attn_mask,
-                           key_padding_mask=key_padding_mask,
-                           need_weights=False)[0]
+                        #    key_padding_mask=key_padding_mask,
+                        #    need_weights=False
+                           )[0] 
         return self.dropout1(x)
 
     # feed forward block

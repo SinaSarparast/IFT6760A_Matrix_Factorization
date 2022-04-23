@@ -29,7 +29,7 @@ if __name__ == "__main__":
     parser.add_argument("-model_save_dir", type=str, default='./models', help="multilabel classification")
     parser.add_argument("-logs_dir", type=str, default='./training_logs', help="multilabel classification")
     parser.add_argument("-epochs", type=int, default=10, help="multilabel classification")
-    parser.add_argument("-bptt", type=int, default=5, help="multilabel classification")
+    parser.add_argument("-bptt", type=int, default=35, help="multilabel classification")
     parser.add_argument("-atten_type", type=str, default='multilinear', help="multilabel classification")
     parser.add_argument("-log_interval", type=int, default=2000, help="multilabel classification")
     parser.add_argument("-train_from", type=int, default=None, help="multilabel classification")
