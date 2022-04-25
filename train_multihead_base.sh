@@ -1,6 +1,4 @@
 python ./train.py\
-    -emsize 512\
-    -d_hid 64\
     -d_model 64\
     -dim_feedforward 2048\
     -nlayers 6\

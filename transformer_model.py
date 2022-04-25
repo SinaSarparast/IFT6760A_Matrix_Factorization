@@ -43,7 +43,9 @@ class TransformerModel(nn.Module):
             nhead=args.nhead,
             dim_feedforward=args.dim_feedforward,
             dropout=args.dropout,
-            atten_type=args.atten_type
+            atten_type=args.atten_type,
+            d_k=args.d_k,
+            d_v=args.d_v
             )
         self.transformer_encoder = TransformerEncoder(encoder_layers, args.nlayers)
         self.encoder = nn.Embedding(args.ntokens, args.d_model)

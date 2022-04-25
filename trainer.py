@@ -25,7 +25,7 @@ class Trainer():
         self.lr = args.lr
         self.ntokens = args.ntokens
         self.bptt = args.bptt
-        self.num_batches = len(self.train_data) // args.bptt
+        self.num_batches = len(self.train_data) // args.bptt #Truncated Backpropagation Through Time
         self.train_from = args.train_from
         self.model_save_dir = args.model_save_dir
         self.logs_dir = args.logs_dir
@@ -97,18 +97,19 @@ class Trainer():
                 print(st)
                 write_to_log(self.logs_dir,'training_log.log',st+'\n')
 
-                # Getting all memory using os.popen()
-                total_memory, used_memory, free_memory = map(
-                    int, os.popen('free -t -m').readlines()[-1].split()[1:])
-                # Memory usage
-                st = "RAM memory used {} percent.".format( round((used_memory/total_memory) * 100, 2) )
-                write_to_log(self.logs_dir,'training_ram.log',st+'\n')
+                if device.type != 'cpu':
+                    # Getting all memory using os.popen()
+                    total_memory, used_memory, free_memory = map(
+                        int, os.popen('free -t -m').readlines()[-1].split()[1:])
+                    # Memory usage
+                    st = "RAM memory used {} percent.".format( round((used_memory/total_memory) * 100, 2) )
+                    write_to_log(self.logs_dir,'training_ram.log',st+'\n')
 
-                allocated_mem = torch.cuda.memory_allocated(0)
-                total_mem = torch.cuda.get_device_properties(0).total_memory
-                # free_mem = torch.cuda.memory_reserved(0)
-                st = "Total GPU memory {}, {} is allocated and {} percent is used".format(total_mem,allocated_mem,100*allocated_mem/total_mem)
-                write_to_log(self.logs_dir,'training_gpu.log',st+'\n')
+                    allocated_mem = torch.cuda.memory_allocated(0)
+                    total_mem = torch.cuda.get_device_properties(0).total_memory
+                    # free_mem = torch.cuda.memory_reserved(0)
+                    st = "Total GPU memory {}, {} is allocated and {} percent is used".format(total_mem,allocated_mem,100*allocated_mem/total_mem)
+                    write_to_log(self.logs_dir,'training_gpu.log',st+'\n')
 
                 total_loss = 0
                 start_time = time.time()

@@ -296,14 +296,14 @@ class TransformerEncoderLayer(Module):
     def __init__(self, d_model: int, nhead: int, dim_feedforward: int = 2048, dropout: float = 0.1,
                  activation: Union[str, Callable[[Tensor], Tensor]] = F.relu,
                  layer_norm_eps: float = 1e-5, batch_first: bool = False, norm_first: bool = False,
-                 device=None, dtype=None, atten_type='multihead') -> None:
+                 device=None, dtype=None, atten_type='multihead', d_k: int = 40, d_v:int = 40) -> None:
         factory_kwargs = {'device': device, 'dtype': dtype}
         super(TransformerEncoderLayer, self).__init__()
         # here
         if atten_type == 'multilinear':
-            self.self_attn = MultiLinearAttention(n_head=nhead, d_model=d_model, d_k=d_model, d_v=d_model, dropout=dropout)
+            self.self_attn = MultiLinearAttention(n_head=nhead, d_model=d_model, d_k=d_k, d_v=d_v, dropout=dropout)
         else:
-            self.self_attn = MultiHeadAttention(n_head=nhead, d_model=d_model, d_k=d_model, d_v=d_model, dropout=dropout)
+            self.self_attn = MultiHeadAttention(n_head=nhead, d_model=d_model, d_k=d_k, d_v=d_v, dropout=dropout)
 
         # Implementation of Feedforward model
         self.linear1 = Linear(d_model, dim_feedforward, **factory_kwargs)
