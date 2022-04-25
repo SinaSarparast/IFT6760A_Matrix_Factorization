@@ -10,9 +10,9 @@ test_data = torch.load(os.path.join(data_dir,'test_data.pt'), map_location=devic
 vocab = torch.load(os.path.join(data_dir,'vocab.pt'), map_location=device )
 
 # only use for debugging
-train_data = torch.randint(0, 100, (150,50))
-val_data = torch.randint(0, 100, (100,50))
-test_data = torch.randint(0, 100, (100,50))
+# train_data = torch.randint(0, 100, (150,50))
+# val_data = torch.randint(0, 100, (100,50))
+# test_data = torch.randint(0, 100, (100,50))
 
 
 if __name__ == "__main__":
@@ -32,13 +32,13 @@ if __name__ == "__main__":
     parser.add_argument("-bptt", type=int, default=35, help="multilabel classification")
     parser.add_argument("-atten_type", type=str, default='multilinear', help="multilabel classification")
     parser.add_argument("-log_interval", type=int, default=2000, help="multilabel classification")
-    parser.add_argument("-train_from", type=int, default=None, help="multilabel classification")
+    parser.add_argument("-train_from", type=str, default=None, help="multilabel classification")
 
     args = parser.parse_args()
     args.ntokens = len(vocab)  # size of vocabulary
 
     # only for debugging
-    args.ntokens = 100
+    # args.ntokens = 100
 
     # warmup_steps = 4000
     # label_smoothing 

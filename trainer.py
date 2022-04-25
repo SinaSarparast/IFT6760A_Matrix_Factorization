@@ -29,7 +29,7 @@ class Trainer():
         self.train_from = args.train_from
         self.model_save_dir = args.model_save_dir
         self.logs_dir = args.logs_dir
-
+        self.mode = args.atten_type
 
         self.optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
         # both multihead and multilinear versions use adam but the loss explodes if we use it (unless small lr is used)
@@ -39,6 +39,7 @@ class Trainer():
         if args.train_from != None:
             checkpoint = torch.load(args.train_from)
             self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.model.train()
             self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             self.current_epoch = checkpoint['epoch']
             print('>>> successfully loaded the model from checkpoint.')
@@ -48,6 +49,10 @@ class Trainer():
         # what sort of scheduling should we use, given that we can't train for very long? 
         # self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, 4000.0, gamma=0.95, verbose=True)
         self.scheduler = ScheduledOptim(self.optimizer,self.lr,self.d_model,n_warmup_steps=10,n_steps=self.current_epoch)
+
+        if args.train_from != None:
+            self.scheduler.step()
+
 
         pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
         st='The model has {} parameters.\n'.format(pytorch_total_params)
@@ -91,6 +96,20 @@ class Trainer():
                 st = f'| epoch {epoch:3d} | {batch:5d}/{self.num_batches:5d} batches | 'f'lr {lr:02.2f} | ms/batch {ms_per_batch:5.2f} | 'f'loss {cur_loss:5.2f} | ppl {ppl:8.2f}'
                 print(st)
                 write_to_log(self.logs_dir,'training_log.log',st+'\n')
+
+                # Getting all memory using os.popen()
+                total_memory, used_memory, free_memory = map(
+                    int, os.popen('free -t -m').readlines()[-1].split()[1:])
+                # Memory usage
+                st = "RAM memory used {} percent.".format( round((used_memory/total_memory) * 100, 2) )
+                write_to_log(self.logs_dir,'training_ram.log',st+'\n')
+
+                allocated_mem = torch.cuda.memory_allocated(0)
+                total_mem = torch.cuda.get_device_properties(0).total_memory
+                # free_mem = torch.cuda.memory_reserved(0)
+                st = "Total GPU memory {}, {} is allocated and {} percent is used".format(total_mem,allocated_mem,100*allocated_mem/total_mem)
+                write_to_log(self.logs_dir,'training_gpu.log',st+'\n')
+
                 total_loss = 0
                 start_time = time.time()
             
@@ -160,7 +179,7 @@ class Trainer():
                     'model_state_dict': self.model.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     'loss': loss,
-                    }, os.path.join(self.model_save_dir,'multilinear_epoch{}.pt'.format(epoch)) )
+                    }, os.path.join(self.model_save_dir,self.mode+'_epoch{}.pt'.format(epoch)) )
             print('>>> successfully saved the model to checkpoint.')
             
 

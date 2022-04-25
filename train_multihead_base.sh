@@ -1,12 +1,12 @@
 python ./train.py\
     -emsize 512\
     -d_hid 64\
-    -d_model 512\
+    -d_model 64\
     -dim_feedforward 2048\
     -nlayers 6\
     -nhead 8\
     -dropout 0.1\
-    -lr 1.0\
+    -lr 1\
     -model_save_dir ./models\
     -logs_dir ./training_logs\
     -epochs 100000\
