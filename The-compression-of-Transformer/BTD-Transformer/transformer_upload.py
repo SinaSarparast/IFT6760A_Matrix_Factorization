@@ -8,9 +8,10 @@ import torch.nn.functional as F
 import numpy as np
 
 sys.path.append('utils')
-from proj_adaptive_softmax import ProjectedAdaptiveLogSoftmax
-from log_uniform_sampler import LogUniformSampler, sample_logits
+from utils.proj_adaptive_softmax import ProjectedAdaptiveLogSoftmax
+from utils.log_uniform_sampler import LogUniformSampler, sample_logits
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class PositionalEmbedding(nn.Module):
     def __init__(self, demb):
@@ -186,12 +187,16 @@ class BlockTensorAttn(MultiLinearAttn):
         rr_head_q = w_head_q + r_r_bias
 
         full_matrixs = 0
-        for i in range(self.core_nums):
-            full_matrix_1 = torch.einsum('h, ibh,jbh,kbh->ibjk',
-                                         [self.core_value[i], rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
+        if self.core_nums == 1:
+            full_matrixs = torch.einsum('h, ibh,jbh,kbh->ibjk',
+                                         [self.core_value[0], rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
+        else:
+            for i in range(self.core_nums):
+                full_matrix_1 = torch.einsum('h, ibh,jbh,kbh->ibjk',
+                                            [self.core_value[i], rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
 
-            full_matrix_2 = torch.einsum('h, ibh,jh,kbh->ibjk',
-                                         [self.core_value[i], rr_head_q, r_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
+                full_matrix_2 = torch.einsum('h, ibh,jh,kbh->ibjk',
+                                            [self.core_value[i], rr_head_q, r_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
 
             full_matrixs += (full_matrix_1 + full_matrix_2)
 
@@ -301,7 +306,7 @@ class TensorizedTransformerLM(nn.Module):
                  tgt_len=None, ext_len=None, mem_len=None,
                  cutoffs=[], adapt_inp=False,
                  same_length=False, attn_type=0, clamp_len=-1,
-                 sample_softmax=-1):
+                 sample_softmax=-1, n_cores=1):
         super(TensorizedTransformerLM, self).__init__()
         self.n_token = n_token
 
@@ -332,7 +337,7 @@ class TensorizedTransformerLM(nn.Module):
                     TensorizedDecoderLayer(
                         n_head, d_model, d_head, d_inner, dropout,
                         tgt_len=tgt_len, ext_len=ext_len, mem_len=mem_len,
-                        dropatt=dropatt, pre_lnorm=pre_lnorm)
+                        dropatt=dropatt, pre_lnorm=pre_lnorm, core_nums=n_cores)
                 )
 
         self.sample_softmax = sample_softmax
@@ -437,7 +442,7 @@ class TensorizedTransformerLM(nn.Module):
             #     word_emb.new_ones(qlen, klen), diagonal=1 + mlen).byte()[:, :, None]
             dec_attn_mask_one = torch.triu(
                 torch.ones(qlen, qlen))
-            dec_attn_mask = torch.stack([dec_attn_mask_one for i in range(qlen)]).cuda().float()
+            dec_attn_mask = torch.stack([dec_attn_mask_one for i in range(qlen)]).to(device).float()
 
         hids = []
         if self.attn_type == 0:  # default
