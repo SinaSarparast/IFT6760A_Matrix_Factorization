@@ -15,6 +15,7 @@ from data_utils import get_lm_corpus
 from transformer_upload import TensorizedTransformerLM
 from utils.exp_utils import create_exp_dir
 from utils.data_parallel import BalancedDataParallel
+from mem_transformer import MemTransformerLM
 
 parser = argparse.ArgumentParser(description='PyTorch Transformer Language Model')
 parser.add_argument('--data', type=str, default='data/ptb',
@@ -295,6 +296,14 @@ else:
                              ext_len=args.ext_len, mem_len=args.mem_len, cutoffs=cutoffs,
                              same_length=args.same_length, attn_type=args.attn_type,
                              clamp_len=args.clamp_len, sample_softmax=args.sample_softmax, n_cores=args.n_cores)
+    if args.attn_type !=0 :
+        model = MemTransformerLM(
+            args.n_token, args.n_layer, args.n_head, args.d_model, args.d_head, args.d_inner,args.dropout, args.dropatt, tie_weight=args.tied, d_embed=args.d_embed, 
+            div_val=args.div_val, tie_projs=tie_projs, pre_lnorm=args.pre_lnorm,
+            tgt_len=args.tgt_len, ext_len=args.ext_len, mem_len=args.mem_len, 
+            cutoffs=cutoffs, adapt_inp=False,
+            same_length=args.same_length, attn_type=args.attn_type, clamp_len=args.clamp_len, 
+            sample_softmax=args.sample_softmax)
     model.apply(weights_init)
     model.word_emb.apply(weights_init)  # ensure embedding init is not overridden by out_layer in case of weight sharing
 args.n_all_param = sum([p.nelement() for p in model.parameters()])

@@ -70,7 +70,7 @@ class PositionwiseFF(nn.Module):
 
 class MultiLinearAttn(nn.Module):
     def __init__(self, n_head, d_model, d_head, dropout, dropatt=0,
-                 tgt_len=30, ext_len=None, mem_len=None, pre_lnorm=False, rand=None, core_nums=1):
+                 tgt_len=30, ext_len=None, mem_len=None, pre_lnorm=False, rand=None, **kwargs):
         super(MultiLinearAttn, self).__init__()
 
         self.n_head = n_head
@@ -78,7 +78,7 @@ class MultiLinearAttn(nn.Module):
         self.d_head = d_head
         self.dropout = dropout
         self.R = self.d_head if rand is None else rand
-        self.core_nums = core_nums
+        self.core_nums = kwargs['core_nums']
 
         self.qkv_net = nn.Linear(d_model, 3 * n_head * d_head, bias=False)
 
@@ -89,7 +89,42 @@ class MultiLinearAttn(nn.Module):
         mem_tar_len = tgt_len + mem_len
 
         self.o_net = nn.Linear(mem_tar_len * mem_tar_len, d_model, bias=False)
-        self.core_value = nn.Parameter(F.softmax(torch.FloatTensor(self.core_nums, self.R), dim=-1), requires_grad=True)
+        # torch.rand(self.core_nums, self.R)*(1-1e-10)
+
+        # percent_drop = 0.3
+
+        # #creating a sparse matrix
+        # row_num = int(self.R * (1-percent_drop))
+        # values = torch.rand(self.core_nums*row_num)
+        # indices_x = []
+        # indices_y = []
+        # for i in range(self.core_nums):
+        #     #indexes should not be repeated and range from 1 to R
+        #     sparse_indices = list(range(0,self.R))
+        #     for j in range(self.R-row_num):
+        #         random_index = np.random.randint(0, len(sparse_indices))
+        #         sparse_indices.pop(random_index)
+        #         indices_x.append(sparse_indices)
+        #         indices_y.append([i for k in range(len(sparse_indices))])
+
+        # flat_list_x = [item for sublist in indices_x for item in sublist]
+        # flat_list_y = [[item for sublist in indices_y for item in sublist]]
+        # flat_list_y.append(flat_list_x)
+        # print(flat_list_y)
+
+        #sparse matrix
+        # sparse_matrix = torch.sparse_coo_tensor(torch.tensor(flat_list_y), torch.tensor(values), (self.core_nums,self.R),requires_grad=True)
+
+        # m = nn.Softmax(dim=1)
+        # self.core_value = nn.Parameter (m(sparse_matrix),requires_grad=True)
+
+
+        # mask = torch.randint(0,2,(self.core_nums, self.R))
+        # self.core_value = nn.Parameter(F.softmax(torch.FloatTensor(self.core_nums, self.R), dim=-1), requires_grad=True)
+        # self.core_value = nn.Parameter(torch.randint(0,2,(self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
+        self.core_value = nn.Parameter(torch.rand((self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
+
+        # self.core_value = nn.Parameter(torch.randint(0,2,(self.core_nums, self.R,self.R,self.R),dtype=torch.float32), requires_grad=True)
 
         self.layer_norm = nn.LayerNorm(d_model)
 
@@ -188,6 +223,7 @@ class BlockTensorAttn(MultiLinearAttn):
 
         full_matrixs = 0
         if self.core_nums == 1:
+            
             full_matrixs = torch.einsum('h, ibh,jbh,kbh->ibjk',
                                          [self.core_value[0], rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
         else:
@@ -198,7 +234,7 @@ class BlockTensorAttn(MultiLinearAttn):
                 full_matrix_2 = torch.einsum('h, ibh,jh,kbh->ibjk',
                                             [self.core_value[i], rr_head_q, r_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
 
-            full_matrixs += (full_matrix_1 + full_matrix_2)
+                full_matrixs += (full_matrix_1 + full_matrix_2)
 
         # linear projection
         full_matrixs.mul_(1/self.core_nums)
