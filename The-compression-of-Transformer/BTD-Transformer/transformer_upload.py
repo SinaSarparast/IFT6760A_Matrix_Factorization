@@ -122,9 +122,9 @@ class MultiLinearAttn(nn.Module):
         # mask = torch.randint(0,2,(self.core_nums, self.R))
         # self.core_value = nn.Parameter(F.softmax(torch.FloatTensor(self.core_nums, self.R), dim=-1), requires_grad=True)
         # self.core_value = nn.Parameter(torch.randint(0,2,(self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
-        self.core_value = nn.Parameter(torch.rand((self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
+        # self.core_value = nn.Parameter(torch.rand((self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
 
-        # self.core_value = nn.Parameter(torch.randint(0,2,(self.core_nums, self.R,self.R,self.R),dtype=torch.float32), requires_grad=True)
+        self.core_value = nn.Parameter(torch.rand(self.R,self.R,self.R,dtype=torch.float32), requires_grad=True)
 
         self.layer_norm = nn.LayerNorm(d_model)
 
@@ -223,9 +223,10 @@ class BlockTensorAttn(MultiLinearAttn):
 
         full_matrixs = 0
         if self.core_nums == 1:
-            
-            full_matrixs = torch.einsum('h, ibh,jbh,kbh->ibjk',
-                                         [self.core_value[0], rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
+            full_matrixs = torch.einsum('hhh, ibh,jbh,kbh->ibjk',
+                                         [self.core_value, rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
+            # full_matrixs = torch.einsum('h, ibh,jbh,kbh->ibjk',
+            #                              [self.core_value[0], rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
         else:
             for i in range(self.core_nums):
                 full_matrix_1 = torch.einsum('h, ibh,jbh,kbh->ibjk',
