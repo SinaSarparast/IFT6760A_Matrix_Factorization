@@ -116,9 +116,9 @@ class MultiLinearAttn(nn.Module):
 
         if kwargs['mode'] == None:
             self.core_value = nn.Parameter(F.softmax(torch.FloatTensor(self.core_nums, self.R), dim=-1), requires_grad=True)
-        elif kwargs['mode'] == 'use tucker':
+        elif kwargs['mode'] == 'use_tucker':
             self.core_value = nn.Parameter(torch.rand(self.R,self.R,self.R,dtype=torch.float32), requires_grad=True)
-        elif kwargs['mode'] == 'no softmax':
+        elif kwargs['mode'] == 'no_softmax':
             self.core_value = nn.Parameter(torch.rand((self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
         elif kwargs['mode'] == 'sparsity':
             self.core_value = nn.Parameter(torch.randint(0,2,(self.core_nums, self.R),dtype=torch.float32),requires_grad=True)
