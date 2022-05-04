@@ -143,6 +143,7 @@ parser.add_argument('--dynamic-loss-scale', action='store_true',
                     help='Use dynamic loss scaling.  If supplied, this argument'
                          ' supersedes --static-loss-scale.')
 parser.add_argument('--n_cores', type=int,help='number of cores', default=1)
+parser.add_argument('--mode', type=str,help='execution mode', default=None)
 args = parser.parse_args()
 args.tied = not args.not_tied
 
@@ -295,7 +296,7 @@ else:
                              tie_projs=tie_projs, pre_lnorm=args.pre_lnorm, tgt_len=args.tgt_len,
                              ext_len=args.ext_len, mem_len=args.mem_len, cutoffs=cutoffs,
                              same_length=args.same_length, attn_type=args.attn_type,
-                             clamp_len=args.clamp_len, sample_softmax=args.sample_softmax, n_cores=args.n_cores)
+                             clamp_len=args.clamp_len, sample_softmax=args.sample_softmax, n_cores=args.n_cores, mode=args.mode)
     if args.attn_type !=0 :
         model = MemTransformerLM(
             args.n_token, args.n_layer, args.n_head, args.d_model, args.d_head, args.d_inner,args.dropout, args.dropatt, tie_weight=args.tied, d_embed=args.d_embed, 

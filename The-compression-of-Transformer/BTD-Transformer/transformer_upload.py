@@ -89,7 +89,6 @@ class MultiLinearAttn(nn.Module):
         mem_tar_len = tgt_len + mem_len
 
         self.o_net = nn.Linear(mem_tar_len * mem_tar_len, d_model, bias=False)
-        # torch.rand(self.core_nums, self.R)*(1-1e-10)
 
         # percent_drop = 0.3
 
@@ -115,16 +114,14 @@ class MultiLinearAttn(nn.Module):
         #sparse matrix
         # sparse_matrix = torch.sparse_coo_tensor(torch.tensor(flat_list_y), torch.tensor(values), (self.core_nums,self.R),requires_grad=True)
 
-        # m = nn.Softmax(dim=1)
-        # self.core_value = nn.Parameter (m(sparse_matrix),requires_grad=True)
-
-
-        # mask = torch.randint(0,2,(self.core_nums, self.R))
-        # self.core_value = nn.Parameter(F.softmax(torch.FloatTensor(self.core_nums, self.R), dim=-1), requires_grad=True)
-        # self.core_value = nn.Parameter(torch.randint(0,2,(self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
-        # self.core_value = nn.Parameter(torch.rand((self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
-
-        self.core_value = nn.Parameter(torch.rand(self.R,self.R,self.R,dtype=torch.float32), requires_grad=True)
+        if kwargs['mode'] == None:
+            self.core_value = nn.Parameter(F.softmax(torch.FloatTensor(self.core_nums, self.R), dim=-1), requires_grad=True)
+        elif kwargs['mode'] == 'use tucker':
+            self.core_value = nn.Parameter(torch.rand(self.R,self.R,self.R,dtype=torch.float32), requires_grad=True)
+        elif kwargs['mode'] == 'no softmax':
+            self.core_value = nn.Parameter(torch.rand((self.core_nums, self.R),dtype=torch.float32), requires_grad=True)
+        elif kwargs['mode'] == 'sparsity':
+            self.core_value = nn.Parameter(torch.randint(0,2,(self.core_nums, self.R),dtype=torch.float32),requires_grad=True)
 
         self.layer_norm = nn.LayerNorm(d_model)
 
@@ -183,7 +180,7 @@ class MultiLinearAttn(nn.Module):
 class BlockTensorAttn(MultiLinearAttn):
     def __init__(self, *args, **kwargs):
         super(BlockTensorAttn, self).__init__(*args, **kwargs)
-
+        self.mode = kwargs['mode']
         self.r_net = nn.Linear(self.d_model, self.n_head * self.d_head, bias=False)
 
     def forward(self, w, r, r_w_bias, r_r_bias, attn_mask=None, mems=None):
@@ -223,10 +220,12 @@ class BlockTensorAttn(MultiLinearAttn):
 
         full_matrixs = 0
         if self.core_nums == 1:
-            full_matrixs = torch.einsum('hhh, ibh,jbh,kbh->ibjk',
-                                         [self.core_value, rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
-            # full_matrixs = torch.einsum('h, ibh,jbh,kbh->ibjk',
-            #                              [self.core_value[0], rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
+            if self.mode == "use tucker":
+                full_matrixs = torch.einsum('hhh, ibh,jbh,kbh->ibjk',
+                                            [self.core_value, rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
+            else:
+                full_matrixs = torch.einsum('h, ibh,jbh,kbh->ibjk',
+                                            [self.core_value[0], rw_head_q, w_head_k, w_head_v]).contiguous().view(qlen, bsz, -1)
         else:
             for i in range(self.core_nums):
                 full_matrix_1 = torch.einsum('h, ibh,jbh,kbh->ibjk',
@@ -343,7 +342,7 @@ class TensorizedTransformerLM(nn.Module):
                  tgt_len=None, ext_len=None, mem_len=None,
                  cutoffs=[], adapt_inp=False,
                  same_length=False, attn_type=0, clamp_len=-1,
-                 sample_softmax=-1, n_cores=1):
+                 sample_softmax=-1, n_cores=1, mode=None):
         super(TensorizedTransformerLM, self).__init__()
         self.n_token = n_token
 
@@ -374,7 +373,8 @@ class TensorizedTransformerLM(nn.Module):
                     TensorizedDecoderLayer(
                         n_head, d_model, d_head, d_inner, dropout,
                         tgt_len=tgt_len, ext_len=ext_len, mem_len=mem_len,
-                        dropatt=dropatt, pre_lnorm=pre_lnorm, core_nums=n_cores)
+                        dropatt=dropatt, pre_lnorm=pre_lnorm, core_nums=n_cores, mode=mode
+                        )
                 )
 
         self.sample_softmax = sample_softmax
